@@ -6,7 +6,68 @@ const fetch = require("node-fetch");
 const Verify = require("./Verify");
 const Cart = require("../modles/Cart");
 const jwt_secret = "hunny";
+const stripe = require("stripe")(
+  "sk_test_51N2pRrSC9BDHQjROnHf0M98KHZoau04vaBZyjRmtZRGJ3fEwj4YnS8P5BEOHtuP9eLsAP7bskVWZ4desy635e2Ke00GiJG3aER"
+);
+
 const route = express.Router();
+
+const generateResponse = (intent) => {
+  // Note that if your API version is before 2019-02-11, 'requires_action'
+  // appears as 'requires_source_action'.
+  if (
+    intent.status === "requires_action" &&
+    intent.next_action.type === "use_stripe_sdk"
+  ) {
+    console.log("in action");
+    // Tell the client to handle the action
+    return {
+      requires_action: true,
+      payment_intent_client_secret: intent.client_secret,
+    };
+  } else if (intent.status === "succeeded") {
+    console.log("success");
+    // The payment didn’t need any additional actions and completed!
+    // Handle post-payment fulfillment
+    return {
+      success: true,
+    };
+  } else {
+    // Invalid status
+    console.log("invalid paymentintent");
+    return {
+      error: "Invalid PaymentIntent status",
+    };
+  }
+};
+
+route.post("/payment", async (request, response) => {
+  try {
+    let intent;
+    if (request.body.payment_method_id) {
+      // Create the PaymentIntent
+      intent = await stripe.paymentIntents.create({
+        payment_method: request.body.payment_method_id,
+        description: "Software development services",
+        amount: request.body.amount * 100,
+        currency: "usd",
+        confirmation_method: "manual",
+        confirm: true,
+      });
+    } else if (request.body.payment_intent_id) {
+      console.log("paymentF");
+      intent = await stripe.paymentIntents.confirm(
+        request.body.payment_intent_id
+      );
+    }
+    // Send the response to the client
+    response.send(generateResponse(intent));
+  } catch (e) {
+    // Display error on client
+    console.log("catch");
+    return response.send({ error: e.message });
+  }
+});
 
 route.post("/cartdelete", Verify, async (req, res) => {
   try {
@@ -29,11 +90,14 @@ route.post("/cartdetail", Verify, async (req, res) => {
 
     const data = await Cart.find({ userid: userid });
 
-    console.log(data);
+    console.log(data, "here");
     if (data.length != 0) {
       return res.json({ success: true, cart: data });
+    } else {
+      console.log("2");
+
+      return res.json({ success: false, cart: data });
     }
-    res.json({ success: false });
   } catch (error) {
     res.status(403).json({ success: false, error });
   }
