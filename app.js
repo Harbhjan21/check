@@ -11,10 +11,11 @@ const cors = require("cors");
 const app = express();
 
 const jwt_secret = "hunnysingh";
-const port = process.env.PORT;
+const port = 3030;
+const mongo_url =
+  "mongodb+srv://Harbhjan:harbhjan@cluster0.tztiudx.mongodb.net/hunny?retryWrites=true&w=majority";
 
-
-mongoose.connect(process.env.MONGO_URL, (err) => {
+mongoose.connect(mongo_url, (err) => {
   if (err) {
     console.log("failed to connect", err);
   } else {
@@ -28,6 +29,9 @@ app.use(bodyparser.json());
 app.use(cors());
 
 app.use("/auth", require("./routes/route"));
+app.get("/", (req, res) => {
+  res.send("hello");
+});
 
 app.listen(port, (err) => {
   if (!err) console.log("server is listning at port 3030");
