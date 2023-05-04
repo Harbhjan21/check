@@ -130,7 +130,8 @@ route.post("/cart", Verify, async (req, res) => {
 route.post("/signup", async (req, res) => {
   console.log(req.body);
   try {
-    const user = await User.findOne({ email: req.body.email });
+    const user = await User.find({ email: req.body.email }).count();
+    console.log(user);
     if (user) {
       return res.json({ error: "user already exist" });
     } else {
