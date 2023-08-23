@@ -15,10 +15,7 @@ const port = 3030;
 const mongo_url =
   "mongodb+srv://Harbhjan:Harbhjan@cluster0.tztiudx.mongodb.net/hunny?retryWrites=true&w=majority";
 
-mongoose.connect(mongo_url, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
+mongoose.connect(mongo_url);
 mongoose.connection.on("connected", (err) => {
   if (!err) console.log("connected mongodb");
   else {
