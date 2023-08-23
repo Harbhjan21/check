@@ -109,7 +109,7 @@ route.post("/cart", Verify, async (req, res) => {
     var decoded = jwt.verify(token, "hunny");
     var userid = decoded.user.id;
 
-    var newcart = Cart({
+    const newcart = new Cart({
       userid: userid,
       title: req.body.title,
       rating: req.body.rating,
@@ -138,14 +138,22 @@ route.post("/signup", async (req, res) => {
       console.log("hereF");
       const salt = await bcrypt.genSalt(10);
       const hashpass = await bcrypt.hash(req.body.password, salt);
+      console.log("check");
 
-      const newuser = await User.create({
+      const newuser = new User({
         username: req.body.username,
         email: req.body.email,
         password: hashpass,
         PhoneNo: req.body.PhoneNo,
       });
-      await newuser.save();
+      await newuser.save((err) => {
+        if (err) {
+          console.log("in save");
+          console.log(err);
+        } else {
+          console.log("done");
+        }
+      });
 
       const payload = {
         user: {
@@ -164,12 +172,14 @@ route.post("/signup", async (req, res) => {
       });
     }
   } catch (error) {
+    console.log("catch");
     res.json({ error });
   }
 });
 route.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
+    console.log(email)
 
     const user = await User.findOne({ email });
     console.log(user);
@@ -182,6 +192,7 @@ route.post("/login", async (req, res) => {
 
     const bcom = await bcrypt.compare(password, user.password);
     if (!bcom) {
+      console.log('bcomF')
       return res.json({ success: false, error: "invaild credentiols" });
     } else {
       const payload = {
